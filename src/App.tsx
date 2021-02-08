@@ -1,26 +1,34 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import "./App.css";
+import { DndProvider } from 'react-dnd'
+import { HTML5Backend } from 'react-dnd-html5-backend'
+import { useStore, StoreContextProvider } from './store'
+import { observer } from 'mobx-react-lite';
+import Card from './components/Card'
+import Board from './components/Board'
 
-function App() {
+
+const Main = observer(() => {
+  const { boards } = useStore() ?? {};
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
+    <main className="App-main">
+      <button style={{position: 'absolute', top: 0}} onClick={() => { boards?.addNewBoard()}}>add new Board</button>
+      {boards?.boardsArray.map(({id, cards}) => (
+        <Board key={id} id={id}>
+          {cards.map((card) => (
+            <Card key={card.id} {...card} />
+          ))}
+        </Board>
+      ))}
+    </main>
+  )
+})
 
+const App = () => (
+  <StoreContextProvider>
+    <DndProvider backend={HTML5Backend}>
+      <Main />
+    </DndProvider>
+  </StoreContextProvider>
+)
 export default App;
