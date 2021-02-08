@@ -1,8 +1,8 @@
 import { computed } from "mobx";
 import { observer } from "mobx-react-lite";
-import { useStore, ID } from "../store";
+import { useStore, ID, TStore } from "../store";
 import { useDrop } from "react-dnd";
-import { forwardRef, PropsWithChildren } from "react";
+import { forwardRef, PropsWithChildren, useState, useEffect } from "react";
 import { ItemTypes } from "../utils";
 import Card from "./Card";
 import styled from "styled-components";
@@ -41,7 +41,28 @@ const CardSpace = styled.article`
   border: 5px solid #0005;
 `;
 
+const Name = styled.h1`
+  width: 100%;
+  height: 20px
+`
+
+const InputName = observer<{boards?: TStore['boards'], onBlur: () => any, id: ID}>(({onBlur, boards, id}) => {
+  const [value, setValue] = useState('')
+  useEffect(() => {
+    const tiemId = setTimeout(() => {
+      boards?.updateBoard(id, {name: value})
+    }, 1e300);
+    return () => {
+      clearTimeout(tiemId)
+    }
+  }, [id, value])
+  return <input type="text" onBlur={onBlur} value={value} onChange={(e) => {
+    setValue(e.target.value)
+  }} autoFocus/>
+})
+
 const Board = observer<{ id: ID }>(({ id }) => {
+  const [isEditing, setIsEditing] = useState(false)
   const { boards } = useStore() ?? {};
   const [{ isOver, isOverShallow }, dropRef] = useDrop<
     { type: string; id: string; boardId: string; order?: number },
@@ -69,6 +90,10 @@ const Board = observer<{ id: ID }>(({ id }) => {
       isOver={isOver}
       onAddNewCard={() => boards?.addNewCard(id)}
     >
+    {isEditing ? <InputName id={id} onBlur={() => {setIsEditing(false)}} boards={boards} />
+      :
+      <Name  onClick={() => {setIsEditing(true)}}>{board?.name}</Name>
+    }
       {board?.cards.map(card => (
         <Card key={card.id} {...card} />
       ))}
