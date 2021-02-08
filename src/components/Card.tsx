@@ -1,12 +1,8 @@
-import type { FC } from 'react'
 import { useDrag } from 'react-dnd'
+import type { FC } from 'react'
 import type { ID } from '../store'
 import logo from "../assets/logo.svg";
-
-enum ItemTypes {
-  CARD = 'CARD'
-}
-
+import { ItemTypes } from '../utils'
 
 const Card: FC<{ text: string, id: ID, boardId: ID }> = (({ id, boardId, text }) => {
   const [{ opacity }, dragRef] = useDrag({

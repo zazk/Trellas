@@ -2,6 +2,7 @@ import type { FC } from 'react'
 import { useState, createContext, useContext } from "react";
 import { observer } from "mobx-react-lite";
 import { observable, action, computed } from "mobx";
+import {uniqid} from './utils'
 
 export type ID = string;
 export interface TStore {
@@ -26,8 +27,6 @@ type TBoardContent = Omit<
 
 // -----------
 
-const uniqid = () =>
-  (Math.random() * new Date().getTime()).toString(16).replace(".", "");
 
 class BoardState {
   private boards = observable.map(
@@ -44,6 +43,25 @@ class BoardState {
         ...card
       }))
     }));
+  }
+
+  @computed get boardsIds(): TBoard['id'][] {
+    return Array.from(this.boards.keys())
+  }
+
+  getBoardDef(boardId: ID): TBoard | null {
+    const board = this.boards.get(boardId)
+    if (!board) return null;
+
+    return ({
+      id: boardId,
+      ...board,
+      cards: Array.from(board.cards).map(([cardId, card]) => ({
+        id: cardId,
+        boardId,
+        ...card
+      })),
+    });
   }
 
   @action addNewBoard() {
@@ -66,6 +84,7 @@ class BoardState {
       this.boards.get(boardTargetId)?.cards.delete(cardId);
     }
   }
+
 }
 
 const StoreContext = createContext<TStore | null>(null);

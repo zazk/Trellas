@@ -1,11 +1,10 @@
+import { computed } from "mobx";
 import { observer } from "mobx-react-lite";
 import { useStore, ID } from "../store";
 import { useDrop } from "react-dnd";
 import { forwardRef, PropsWithChildren } from "react";
-
-enum ItemTypes {
-  CARD = "CARD"
-}
+import { ItemTypes } from "../utils";
+import Card from "./Card";
 
 const BoardPresentational = forwardRef<
   HTMLDivElement,
@@ -20,7 +19,7 @@ const BoardPresentational = forwardRef<
   </div>
 ));
 
-const Board = observer<{ id: ID }>(({ children, id }) => {
+const Board = observer<{ id: ID }>(({ id }) => {
   const { boards } = useStore() ?? {};
   const [{ isOver }, dropRef] = useDrop<
     { type: string; id: string; boardId: string },
@@ -35,25 +34,20 @@ const Board = observer<{ id: ID }>(({ children, id }) => {
       isOver: !!monitor.isOver()
     })
   });
-  
+
+  const board = computed(() => boards?.getBoardDef(id)).get();
+
   return (
     <BoardPresentational
       ref={dropRef}
       isOver={isOver}
       onAddNewCard={() => boards?.addNewCard(id)}
     >
-      {children}
+      {board?.cards.map(card => (
+        <Card key={card.id} {...card} />
+      ))}
     </BoardPresentational>
   );
-  // return (
-  //   <div
-  //     ref={dropRef}
-  //     className={['board', isOver && 'over'].filter(Boolean).join(' ')}
-  //   >
-  //     <button onClick={() => { boards?.addNewCard(id) }}>add new Card</button>
-  //     {children}
-  //   </div>
-  // )
 });
 
 export default Board;
