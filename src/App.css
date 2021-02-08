@@ -35,25 +35,3 @@
   color: white;
   padding-top: 50px;
 }
-
-.board {
-  position: relative;
-  width: 200px;
-  height: 800px;
-  background-color: #fffa;
-  margin: 10px;
-  padding: 10px;
-}
-
-.board.over {
-  background-color: #fff6;
-}
-
-.item {
-  width: calc(200px - (10 * 2));
-  display: flex;
-  flex-direction: column;
-  border: 1px solid black;
-  border-radius: 10px;
-  padding: 10px;
-}

@@ -2,7 +2,7 @@ import type { FC } from 'react'
 import { useState, createContext, useContext } from "react";
 import { observer } from "mobx-react-lite";
 import { observable, action, computed } from "mobx";
-import {uniqid} from './utils'
+import { uniqid } from "./utils";
 
 export type ID = string;
 export interface TStore {
@@ -12,6 +12,7 @@ export interface TCard {
   text: string;
   id: ID;
   boardId: ID;
+  order: number;
 }
 export interface TBoard<T = TCard[]> {
   id: ID;
@@ -20,18 +21,12 @@ export interface TBoard<T = TCard[]> {
 
 // private
 type TCardContet = Omit<TCard, "id" | "boardId">;
-type TBoardContent = Omit<
-  TBoard<Map<TCard["id"], TCardContet>>,
-  "id"
->
+type TBoardContent = Omit<TBoard<Map<TCard["id"], TCardContet>>, "id">;
 
 // -----------
 
-
 class BoardState {
-  private boards = observable.map(
-    new Map< TBoard["id"],TBoardContent>([])
-  );
+  private boards = observable.map(new Map<TBoard["id"], TBoardContent>([]));
 
   @computed get boardsArray(): TBoard[] {
     return Array.from(this.boards).map(([boardId, { cards, ...board }]) => ({
@@ -45,46 +40,84 @@ class BoardState {
     }));
   }
 
-  @computed get boardsIds(): TBoard['id'][] {
-    return Array.from(this.boards.keys())
+  @computed get boardsIds(): TBoard["id"][] {
+    return Array.from(this.boards.keys());
   }
 
   getBoardDef(boardId: ID): TBoard | null {
-    const board = this.boards.get(boardId)
+    const board = this.boards.get(boardId);
     if (!board) return null;
 
-    return ({
+    return {
       id: boardId,
       ...board,
       cards: Array.from(board.cards).map(([cardId, card]) => ({
         id: cardId,
         boardId,
         ...card
-      })),
-    });
+      }))
+    };
   }
 
   @action addNewBoard() {
     this.boards.set(uniqid(), { cards: new Map() });
   }
   @action addNewCard(boardId: ID, newCardData: Partial<TCardContet> = {}) {
-    const newID = uniqid();
-    const newCard = {
-      ...newCardData,
-      text: `card: ${newID}`
-    };
+    const boardStore = this.boards.get(boardId);
+    if (boardStore) {
+      const newID = uniqid();
+      const newCard = {
+        ...newCardData,
+        text: `card: ${newID}`,
+        order: boardStore.cards.size
+      };
 
-    this.boards.get(boardId)?.cards.set(newID, newCard);
-  }
-
-  @action moveCard(cardId: ID, boardTargetId: ID, boardDestId: ID) {
-    const card = this.boards.get(boardTargetId)?.cards.get(cardId);
-    if (card) {
-      this.boards.get(boardDestId)?.cards.set(cardId, card);
-      this.boards.get(boardTargetId)?.cards.delete(cardId);
+      boardStore.cards.set(newID, newCard);
     }
   }
 
+  @action moveCard(
+    cardId: ID,
+    boardTargetId: ID,
+    boardDestId: ID,
+    order: number
+  ) {
+    console.log(cardId, boardTargetId, boardDestId, order);
+    if (boardTargetId !== boardDestId) {
+      const card = this.boards.get(boardTargetId)?.cards.get(cardId);
+      if (card) {
+        this.boards.get(boardTargetId)?.cards.delete(cardId);
+        Array.from(this.boards.get(boardDestId)?.cards.entries() ?? []).forEach(
+          ([id, item]) => {
+            if (item.order >= order) {
+              this.boards
+                .get(boardDestId)
+                ?.cards.set(id, { ...item, order: item.order + 1 });
+            }
+          }
+        );
+        this.boards.get(boardDestId)?.cards.set(cardId, { ...card, order });
+      }
+    } else {
+      Array.from(this.boards.get(boardDestId)?.cards.entries() ?? []).forEach(
+        ([id, item]) => {
+          if (id === cardId) {
+            this.boards.get(boardDestId)?.cards.set(id, { ...item, order });
+          } else if (item.order >= order) {
+            this.boards
+              .get(boardDestId)
+              ?.cards.set(id, { ...item, order: item.order + 1 });
+          }
+        }
+      );
+    }
+  }
+  @action updateCard(cardId: ID, boardId: ID, card: Partial<TCardContet>) {
+    if (this.boards.get(boardId)?.cards.has(cardId)) {
+      const old = this.boards.get(boardId)?.cards.get(cardId)!;
+      this.boards.get(boardId)?.cards.set(cardId, { ...old, ...card });
+    }
+  }
 }
 
 const StoreContext = createContext<TStore | null>(null);
