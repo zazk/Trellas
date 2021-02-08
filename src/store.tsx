@@ -20,9 +20,8 @@ export interface TBoard<T = TCard[]> {
   cards: T;
 }
 
-// private
-type TCardContet = Omit<TCard, "id" | "boardId">;
-type TBoardContent = Omit<TBoard<Map<TCard["id"], TCardContet>>, "id">;
+export type TCardContent = Omit<TCard, "id" | "boardId">;
+type TBoardContent = Omit<TBoard<Map<TCard["id"], TCardContent>>, "id">;
 
 // -----------
 
@@ -63,7 +62,7 @@ class BoardState {
   @action addNewBoard() {
     this.boards.set(uniqid(), { name: '', cards: new Map() });
   }
-  @action addNewCard(boardId: ID, newCardData: Partial<TCardContet> = {}) {
+  @action addNewCard(boardId: ID, newCardData: Partial<TCardContent> = {}) {
     const boardStore = this.boards.get(boardId);
     if (boardStore) {
       const newID = uniqid();
@@ -113,7 +112,7 @@ class BoardState {
       );
     }
   }
-  @action updateCard(cardId: ID, boardId: ID, card: Partial<TCardContet>) {
+  @action updateCard(cardId: ID, boardId: ID, card: Partial<TCardContent>) {
     if (this.boards.get(boardId)?.cards.has(cardId)) {
       const old = this.boards.get(boardId)?.cards.get(cardId)!;
       this.boards.get(boardId)?.cards.set(cardId, { ...old, ...card });

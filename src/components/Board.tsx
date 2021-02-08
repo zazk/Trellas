@@ -2,7 +2,14 @@ import { computed } from "mobx";
 import { observer } from "mobx-react-lite";
 import { useStore, ID, TStore } from "../store";
 import { useDrop } from "react-dnd";
-import { forwardRef, PropsWithChildren, useState, useEffect } from "react";
+import {
+  forwardRef,
+  PropsWithChildren,
+  useState,
+  useEffect,
+  useCallback,
+  ComponentProps
+} from "react";
 import { ItemTypes } from "../utils";
 import Card from "./Card";
 import styled from "styled-components";
@@ -43,26 +50,38 @@ const CardSpace = styled.article`
 
 const Name = styled.h1`
   width: 100%;
-  height: 20px
-`
+  height: 20px;
+`;
 
-const InputName = observer<{boards?: TStore['boards'], onBlur: () => any, id: ID}>(({onBlur, boards, id}) => {
-  const [value, setValue] = useState('')
+const InputName = observer<{
+  boards?: TStore["boards"];
+  onBlur: () => any;
+  id: ID;
+}>(({ onBlur, boards, id }) => {
+  const [value, setValue] = useState("");
   useEffect(() => {
     const tiemId = setTimeout(() => {
-      boards?.updateBoard(id, {name: value})
+      boards?.updateBoard(id, { name: value });
     }, 1e300);
     return () => {
-      clearTimeout(tiemId)
-    }
-  }, [id, value])
-  return <input type="text" onBlur={onBlur} value={value} onChange={(e) => {
-    setValue(e.target.value)
-  }} autoFocus/>
-})
+      clearTimeout(tiemId);
+    };
+  }, [id, value]);
+  return (
+    <input
+      type="text"
+      onBlur={onBlur}
+      value={value}
+      onChange={e => {
+        setValue(e.target.value);
+      }}
+      autoFocus
+    />
+  );
+});
 
 const Board = observer<{ id: ID }>(({ id }) => {
-  const [isEditing, setIsEditing] = useState(false)
+  const [isEditing, setIsEditing] = useState(false);
   const { boards } = useStore() ?? {};
   const [{ isOver, isOverShallow }, dropRef] = useDrop<
     { type: string; id: string; boardId: string; order?: number },
@@ -84,18 +103,42 @@ const Board = observer<{ id: ID }>(({ id }) => {
 
   const board = computed(() => boards?.getBoardDef(id)).get();
 
+  const onUpdateCard = useCallback((newCard: Parameters<ComponentProps<typeof Card>['onUpdateCard']>[0]) => {
+    const {id: cardID, ...rest} = newCard
+    boards?.updateCard(cardID, id, rest)
+  }, []);
+  const onDelete = useCallback(() => {}, []);
+
   return (
     <BoardPresentational
       ref={dropRef}
       isOver={isOver}
       onAddNewCard={() => boards?.addNewCard(id)}
     >
-    {isEditing ? <InputName id={id} onBlur={() => {setIsEditing(false)}} boards={boards} />
-      :
-      <Name  onClick={() => {setIsEditing(true)}}>{board?.name}</Name>
-    }
+      {isEditing ? (
+        <InputName
+          id={id}
+          onBlur={() => {
+            setIsEditing(false);
+          }}
+          boards={boards}
+        />
+      ) : (
+        <Name
+          onClick={() => {
+            setIsEditing(true);
+          }}
+        >
+          {board?.name}
+        </Name>
+      )}
       {board?.cards.map(card => (
-        <Card key={card.id} {...card} />
+        <Card
+          key={card.id}
+          {...card}
+          onUpdateCard={onUpdateCard}
+          onDelete={onDelete}
+        />
       ))}
       {isOverShallow && <CardSpace />}
     </BoardPresentational>

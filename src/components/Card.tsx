@@ -1,8 +1,9 @@
 import { useDrag, useDrop } from "react-dnd";
-import { FC } from "react";
-import type { ID, TCard } from '../store'
+import { FC, useState, useRef, useMemo } from "react";
+import type { ID, TCard, TCardContent } from '../store'
 import { ItemTypes } from "../utils";
 import styled from "styled-components";
+import EditCard from './EditCard'
 
 const CardContainer = styled.article`
   width: calc(200px - (10 * 2));
@@ -22,9 +23,17 @@ const CardSpace = styled.article`
   border: 5px solid #0005;
 `;
 
-export type CardProps = TCard;
+export type CardProps = TCard & {
+  onUpdateCard: (
+    newCard: {id: ID} & Partial<TCardContent>
+  ) => any
+  onDelete: () => any
+};
 
-const Card: FC<CardProps> = ({ id, boardId, text, order = 0 }) => {
+const Card: FC<CardProps> = ({ id, boardId, text, order = 0, onUpdateCard }) => {
+  const ref = useRef<HTMLElement>(null)
+  const [isEditing, setIsEditing] = useState(false)
+  const [position, setPosition] = useState<DOMRect | null>(null)
   const [{ isOver }, dropRef] = useDrop<
     { type: string; id: string; boardId: string; order?: number },
     unknown,
@@ -43,19 +52,33 @@ const Card: FC<CardProps> = ({ id, boardId, text, order = 0 }) => {
       isDragging: monitor.isDragging()
     })
   });
-
+  const textParsed = useMemo(()=> text.replace(/(?:\r\n|\r|\n)/g, '<br>'), [text])
+  dragRef(ref)
   return (
     <div ref={dropRef} style={{ order }}>
       {isOver && <CardSpace />}
       <CardContainer
-        ref={dragRef}
+        ref={ref}
         style={{
           opacity,
           ...(isDragging ? { display: "none" } : {})
         }}
       >
-        {text}
+      <p dangerouslySetInnerHTML={{__html: textParsed}} />
+        <button onClick={() => {
+          setPosition(ref.current?.getBoundingClientRect() ?? null)
+          setIsEditing(true)
+        }}>edit</button>
       </CardContainer>
+      {isEditing && position&& <EditCard
+        position={position}
+        onExit={() => setIsEditing(false)}
+        description={text}
+        onSave={(text) => {
+          setIsEditing(false)
+          onUpdateCard({id, text})
+        }}
+        />}
     </div>
   );
 };
