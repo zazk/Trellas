@@ -14,37 +14,47 @@ const CardContainer = styled.article`
   background-color: #fff;
   color: black;
   box-shadow: 0px 2px 2px #0002, 0px 4px 4px #0003;
-
+  cursor: grab;
+  &:first-child {
+    margin-top: 0;
+  }
+  &:active {
+    cursor: grabbing;
+  }
   &.draggin {
     display: none;
   }
 `;
 
-const CardSpace = styled.article`
-  width: calc(200px - (10 * 2));
-  height: 40px;
-  border: 5px solid #0005;
+export const CardSpace = styled.article`
+  height: 102px;
+  width: calc(100% + 10px);
+  border: 5px dashed #0005;
   margin: 10px 0;
+  border-radius: 10px;
+  margin -5px;
 `;
 
 const CardText = styled.p`
-  margin: 0;
+  margin: 10px 0;
+  font-size: 14px;
 `;
 
-const CardEditBtn = styled.button``;
+export const CardEditBtn = styled.button`
+  background: #0003;
+  border: none;
+  padding: 8px;
+  border-radius: 8px;
+  width: 80px;
+  cursor: pointer;
+`;
 
 type CardProps = TCard & {
   onUpdateCard: (newCard: { id: ID } & Partial<TCardContent>) => any;
   onDelete: () => any;
 };
 
-const Card: FC<CardProps> = ({
-  id,
-  listId,
-  text,
-  order = 0,
-  onUpdateCard
-}) => {
+const Card: FC<CardProps> = ({ id, listId, text, order = 0, onUpdateCard }) => {
   const ref = useRef<HTMLElement>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [position, setPosition] = useState<DOMRect | null>(null);
@@ -89,7 +99,7 @@ const Card: FC<CardProps> = ({
 
       <CardContainer ref={ref} className={isDragging ? "draggin" : ""}>
         <CardText dangerouslySetInnerHTML={{ __html: textParsed }} />
-        <CardEditBtn onClick={onEditHandler}>edit</CardEditBtn>
+        <CardEditBtn onClick={onEditHandler}>Edit</CardEditBtn>
       </CardContainer>
 
       {isEditing && position && (

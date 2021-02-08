@@ -61,8 +61,8 @@ class ListState {
     };
   }
 
-  @action addNewList() {
-    this.lists.set(uniqid(), { name: "", cards: new Map() });
+  @action addNewList(name: string = '') {
+    this.lists.set(uniqid(), { name, cards: new Map() });
   }
   @action addNewCard(listId: ID, newCardData: Partial<TCardContent> = {}) {
     const listStore = this.lists.get(listId);
