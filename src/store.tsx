@@ -26,7 +26,9 @@ type TBoardContent = Omit<TBoard<Map<TCard["id"], TCardContent>>, "id">;
 // -----------
 
 class BoardState {
-  private boards = observable.map(new Map<TBoard["id"], TBoardContent>([]), { deep: true });
+  private boards = observable.map(new Map<TBoard["id"], TBoardContent>([]), {
+    deep: true
+  });
 
   @computed get boardsArray(): TBoard[] {
     return Array.from(this.boards).map(([boardId, { cards, ...board }]) => ({
@@ -60,7 +62,7 @@ class BoardState {
   }
 
   @action addNewBoard() {
-    this.boards.set(uniqid(), { name: '', cards: new Map() });
+    this.boards.set(uniqid(), { name: "", cards: new Map() });
   }
   @action addNewCard(boardId: ID, newCardData: Partial<TCardContent> = {}) {
     const boardStore = this.boards.get(boardId);
@@ -118,10 +120,13 @@ class BoardState {
       this.boards.get(boardId)?.cards.set(cardId, { ...old, ...card });
     }
   }
-  @action updateBoard(boardId: ID, board: Partial<Omit<TBoard, 'cards' | 'id'>>) {
+  @action updateBoard(
+    boardId: ID,
+    board: Partial<Omit<TBoard, "cards" | "id">>
+  ) {
     if (this.boards.has(boardId)) {
       const boardOld = this.boards.get(boardId)!;
-      this.boards.set(boardId, { ...boardOld, ...board })
+      this.boards.set(boardId, { ...boardOld, ...board });
     }
   }
 }

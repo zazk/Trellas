@@ -16,7 +16,7 @@ import styled from "styled-components";
 
 const BoardContainer = styled.section`
   position: relative;
-  width: 200px;
+  width: 300px;
   background-color: #fffa;
   margin: 10px;
   padding: 10px;
@@ -103,10 +103,13 @@ const Board = observer<{ id: ID }>(({ id }) => {
 
   const board = computed(() => boards?.getBoardDef(id)).get();
 
-  const onUpdateCard = useCallback((newCard: Parameters<ComponentProps<typeof Card>['onUpdateCard']>[0]) => {
-    const {id: cardID, ...rest} = newCard
-    boards?.updateCard(cardID, id, rest)
-  }, []);
+  const onUpdateCard = useCallback(
+    (newCard: Parameters<ComponentProps<typeof Card>["onUpdateCard"]>[0]) => {
+      const { id: cardID, ...rest } = newCard;
+      boards?.updateCard(cardID, id, rest);
+    },
+    []
+  );
   const onDelete = useCallback(() => {}, []);
 
   return (
@@ -115,22 +118,11 @@ const Board = observer<{ id: ID }>(({ id }) => {
       isOver={isOver}
       onAddNewCard={() => boards?.addNewCard(id)}
     >
-      {isEditing ? (
-        <InputName
-          id={id}
-          onBlur={() => {
-            setIsEditing(false);
-          }}
-          boards={boards}
-        />
-      ) : (
-        <Name
-          onClick={() => {
-            setIsEditing(true);
-          }}
-        >
-          {board?.name}
-        </Name>
+      {isEditing && (
+        <InputName id={id} onBlur={() => setIsEditing(false)} boards={boards} />
+      )}
+      {!isEditing && (
+        <Name onClick={() => setIsEditing(true)}>{board?.name}</Name>
       )}
       {board?.cards.map(card => (
         <Card
