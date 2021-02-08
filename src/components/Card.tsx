@@ -40,7 +40,7 @@ type CardProps = TCard & {
 
 const Card: FC<CardProps> = ({
   id,
-  boardId,
+  listId,
   text,
   order = 0,
   onUpdateCard
@@ -50,7 +50,7 @@ const Card: FC<CardProps> = ({
   const [position, setPosition] = useState<DOMRect | null>(null);
 
   const [{ isOver }, dropRef] = useDrop<
-    { type: string; id: string; boardId: string; order?: number },
+    { type: string; id: string; listId: string; order?: number },
     unknown,
     { isOver: boolean }
   >({
@@ -64,7 +64,7 @@ const Card: FC<CardProps> = ({
   });
 
   const [{ isDragging }, dragRef] = useDrag({
-    item: { type: ItemTypes.CARD, id, boardId, order },
+    item: { type: ItemTypes.CARD, id, listId, order },
     collect: monitor => ({ isDragging: monitor.isDragging() })
   });
 

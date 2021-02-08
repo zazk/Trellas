@@ -10,9 +10,9 @@ const Button = styled.button`
   margin: 10px;
 `;
 
-const AddNewBoard = observer(() => {
-  const { boards } = useStore() ?? {};
-  return <Button onClick={() => boards?.addNewBoard()}>add new Board</Button>;
+const AddNewList = observer(() => {
+  const { lists } = useStore() ?? {};
+  return <Button onClick={() => lists?.addNewList()}>add new List</Button>;
 });
 
-export default AddNewBoard;
+export default AddNewList;

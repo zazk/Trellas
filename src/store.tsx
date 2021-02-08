@@ -6,127 +6,127 @@ import { uniqid } from "./utils";
 
 export type ID = string;
 export interface TStore {
-  boards: BoardState;
+  lists: ListState;
 }
 export interface TCard {
   text: string;
   id: ID;
-  boardId: ID;
+  listId: ID;
   order: number;
 }
-export interface TBoard<T = TCard[]> {
+export interface TList<T = TCard[]> {
   id: ID;
   name: string;
   cards: T;
 }
 
-export type TCardContent = Omit<TCard, "id" | "boardId">;
-type TBoardContent = Omit<TBoard<Map<TCard["id"], TCardContent>>, "id">;
+export type TCardContent = Omit<TCard, "id" | "listId">;
+type TListContent = Omit<TList<Map<TCard["id"], TCardContent>>, "id">;
 
 // -----------
 
-class BoardState {
-  private boards = observable.map(new Map<TBoard["id"], TBoardContent>([]), {
+class ListState {
+  private lists = observable.map(new Map<TList["id"], TListContent>([]), {
     deep: true
   });
 
-  @computed get boardsArray(): TBoard[] {
-    return Array.from(this.boards).map(([boardId, { cards, ...board }]) => ({
-      id: boardId,
-      ...board,
+  @computed get listsArray(): TList[] {
+    return Array.from(this.lists).map(([listId, { cards, ...list }]) => ({
+      id: listId,
+      ...list,
       cards: Array.from(cards).map(([cardId, card]) => ({
         id: cardId,
-        boardId,
+        listId,
         ...card
       }))
     }));
   }
 
-  @computed get boardsIds(): TBoard["id"][] {
-    return Array.from(this.boards.keys());
+  @computed get listIds(): TList["id"][] {
+    return Array.from(this.lists.keys());
   }
 
-  getBoardDef(boardId: ID): TBoard | null {
-    const board = this.boards.get(boardId);
-    if (!board) return null;
+  getListDef(listId: ID): TList | null {
+    const list = this.lists.get(listId);
+    if (!list) return null;
 
     return {
-      id: boardId,
-      ...board,
-      cards: Array.from(board.cards).map(([cardId, card]) => ({
+      id: listId,
+      ...list,
+      cards: Array.from(list.cards).map(([cardId, card]) => ({
         id: cardId,
-        boardId,
+        listId,
         ...card
       }))
     };
   }
 
-  @action addNewBoard() {
-    this.boards.set(uniqid(), { name: "", cards: new Map() });
+  @action addNewList() {
+    this.lists.set(uniqid(), { name: "", cards: new Map() });
   }
-  @action addNewCard(boardId: ID, newCardData: Partial<TCardContent> = {}) {
-    const boardStore = this.boards.get(boardId);
-    if (boardStore) {
+  @action addNewCard(listId: ID, newCardData: Partial<TCardContent> = {}) {
+    const listStore = this.lists.get(listId);
+    if (listStore) {
       const newID = uniqid();
       const newCard = {
         ...newCardData,
         text: `card: ${newID}`,
-        order: boardStore.cards.size
+        order: listStore.cards.size
       };
 
-      boardStore.cards.set(newID, newCard);
+      listStore.cards.set(newID, newCard);
     }
   }
 
   @action moveCard(
     cardId: ID,
-    boardTargetId: ID,
-    boardDestId: ID,
+    listTargetId: ID,
+    listDestId: ID,
     order: number
   ) {
-    console.log(cardId, boardTargetId, boardDestId, order);
-    if (boardTargetId !== boardDestId) {
-      const card = this.boards.get(boardTargetId)?.cards.get(cardId);
+    console.log(cardId, listTargetId, listDestId, order);
+    if (listTargetId !== listDestId) {
+      const card = this.lists.get(listTargetId)?.cards.get(cardId);
       if (card) {
-        this.boards.get(boardTargetId)?.cards.delete(cardId);
-        Array.from(this.boards.get(boardDestId)?.cards.entries() ?? []).forEach(
+        this.lists.get(listTargetId)?.cards.delete(cardId);
+        Array.from(this.lists.get(listDestId)?.cards.entries() ?? []).forEach(
           ([id, item]) => {
             if (item.order >= order) {
-              this.boards
-                .get(boardDestId)
+              this.lists
+                .get(listDestId)
                 ?.cards.set(id, { ...item, order: item.order + 1 });
             }
           }
         );
-        this.boards.get(boardDestId)?.cards.set(cardId, { ...card, order });
+        this.lists.get(listDestId)?.cards.set(cardId, { ...card, order });
       }
     } else {
-      Array.from(this.boards.get(boardDestId)?.cards.entries() ?? []).forEach(
+      Array.from(this.lists.get(listDestId)?.cards.entries() ?? []).forEach(
         ([id, item]) => {
           if (id === cardId) {
-            this.boards.get(boardDestId)?.cards.set(id, { ...item, order });
+            this.lists.get(listDestId)?.cards.set(id, { ...item, order });
           } else if (item.order >= order) {
-            this.boards
-              .get(boardDestId)
+            this.lists
+              .get(listDestId)
               ?.cards.set(id, { ...item, order: item.order + 1 });
           }
         }
       );
     }
   }
-  @action updateCard(cardId: ID, boardId: ID, card: Partial<TCardContent>) {
-    if (this.boards.get(boardId)?.cards.has(cardId)) {
-      const old = this.boards.get(boardId)?.cards.get(cardId)!;
-      this.boards.get(boardId)?.cards.set(cardId, { ...old, ...card });
+  @action updateCard(cardId: ID, listId: ID, card: Partial<TCardContent>) {
+    if (this.lists.get(listId)?.cards.has(cardId)) {
+      const old = this.lists.get(listId)?.cards.get(cardId)!;
+      this.lists.get(listId)?.cards.set(cardId, { ...old, ...card });
     }
   }
-  @action updateBoard(
-    boardId: ID,
-    board: Partial<Omit<TBoard, "cards" | "id">>
+  @action updateList(
+    listId: ID,
+    list: Partial<Omit<TList, "cards" | "id">>
   ) {
-    if (this.boards.has(boardId)) {
-      const boardOld = this.boards.get(boardId)!;
-      this.boards.set(boardId, { ...boardOld, ...board });
+    if (this.lists.has(listId)) {
+      const listOld = this.lists.get(listId)!;
+      this.lists.set(listId, { ...listOld, ...list });
     }
   }
 }
@@ -134,7 +134,7 @@ class BoardState {
 const StoreContext = createContext<TStore | null>(null);
 
 const createStore = (): TStore => ({
-  boards: new BoardState()
+  lists: new ListState()
 });
 
 export const useStore = () => {

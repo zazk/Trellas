@@ -2,8 +2,8 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { useStore, StoreContextProvider } from "../store";
 import { observer } from "mobx-react-lite";
-import Board from "./Board";
-import AddNewBoard from "./AddNewBoard";
+import List from "./List";
+import AddNewList from "./AddNewList";
 
 import styled from "styled-components";
 
@@ -18,13 +18,13 @@ const MainStyled = styled.main`
 `;
 
 const Main = observer(() => {
-  const { boards } = useStore() ?? {};
+  const { lists } = useStore() ?? {};
   return (
     <MainStyled>
-      {boards?.boardsIds.map(id => (
-        <Board key={id} id={id} />
+      {lists?.listIds.map(id => (
+        <List key={id} id={id} />
       ))}
-      <AddNewBoard />
+      <AddNewList />
     </MainStyled>
   );
 });

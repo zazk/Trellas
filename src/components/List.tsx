@@ -14,7 +14,7 @@ import { ItemTypes } from "../utils";
 import Card from "./Card";
 import styled from "styled-components";
 
-const BoardContainer = styled.section`
+const ListContainer = styled.section`
   position: relative;
   width: 300px;
   background-color: #fffa;
@@ -24,22 +24,22 @@ const BoardContainer = styled.section`
     background-color: #fff6;
   }
 `;
-const BoardCardsContainer = styled.section`
+const ListCardsContainer = styled.section`
   display: flex;
   flex-direction: column;
 `;
 
-const BoardPresentational = forwardRef<
+const ListPresentational = forwardRef<
   HTMLDivElement,
   PropsWithChildren<{ isOver: boolean; onAddNewCard: () => any }>
 >(({ isOver, children, onAddNewCard }, ref) => (
-  <BoardContainer
+  <ListContainer
     ref={ref}
     className={[isOver && "over"].filter(Boolean).join(" ")}
   >
-    <BoardCardsContainer>{children}</BoardCardsContainer>
+    <ListCardsContainer>{children}</ListCardsContainer>
     <button onClick={onAddNewCard}>add new Card</button>
-  </BoardContainer>
+  </ListContainer>
 ));
 
 const CardSpace = styled.article`
@@ -54,14 +54,14 @@ const Name = styled.h1`
 `;
 
 const InputName = observer<{
-  boards?: TStore["boards"];
+  lists?: TStore["lists"];
   onBlur: () => any;
   id: ID;
-}>(({ onBlur, boards, id }) => {
+}>(({ onBlur, lists, id }) => {
   const [value, setValue] = useState("");
   useEffect(() => {
     const tiemId = setTimeout(() => {
-      boards?.updateBoard(id, { name: value });
+      lists?.updateList(id, { name: value });
     }, 1e300);
     return () => {
       clearTimeout(tiemId);
@@ -80,17 +80,17 @@ const InputName = observer<{
   );
 });
 
-const Board = observer<{ id: ID }>(({ id }) => {
+const List = observer<{ id: ID }>(({ id }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const { boards } = useStore() ?? {};
+  const { lists } = useStore() ?? {};
   const [{ isOver, isOverShallow }, dropRef] = useDrop<
-    { type: string; id: string; boardId: string; order?: number },
+    { type: string; id: string; listId: string; order?: number },
     unknown,
     { isOver: boolean; isOverShallow: boolean }
   >({
     accept: ItemTypes.CARD,
     drop(item) {
-      boards?.moveCard(item.id, item.boardId, id, item.order ?? 0);
+      lists?.moveCard(item.id, item.listId, id, item.order ?? 0);
     },
     collect: monitor => ({
       isOver: !!monitor.isOver(),
@@ -101,30 +101,30 @@ const Board = observer<{ id: ID }>(({ id }) => {
     }
   });
 
-  const board = computed(() => boards?.getBoardDef(id)).get();
+  const list = computed(() => lists?.getListDef(id)).get();
 
   const onUpdateCard = useCallback(
     (newCard: Parameters<ComponentProps<typeof Card>["onUpdateCard"]>[0]) => {
       const { id: cardID, ...rest } = newCard;
-      boards?.updateCard(cardID, id, rest);
+      lists?.updateCard(cardID, id, rest);
     },
     []
   );
   const onDelete = useCallback(() => {}, []);
 
   return (
-    <BoardPresentational
+    <ListPresentational
       ref={dropRef}
       isOver={isOver}
-      onAddNewCard={() => boards?.addNewCard(id)}
+      onAddNewCard={() => lists?.addNewCard(id)}
     >
       {isEditing && (
-        <InputName id={id} onBlur={() => setIsEditing(false)} boards={boards} />
+        <InputName id={id} onBlur={() => setIsEditing(false)} lists={lists} />
       )}
       {!isEditing && (
-        <Name onClick={() => setIsEditing(true)}>{board?.name}</Name>
+        <Name onClick={() => setIsEditing(true)}>{list?.name}</Name>
       )}
-      {board?.cards.map(card => (
+      {list?.cards.map(card => (
         <Card
           key={card.id}
           {...card}
@@ -133,8 +133,8 @@ const Board = observer<{ id: ID }>(({ id }) => {
         />
       ))}
       {isOverShallow && <CardSpace />}
-    </BoardPresentational>
+    </ListPresentational>
   );
 });
 
-export default Board;
+export default List;
