@@ -4,6 +4,8 @@ import { useStore, StoreContextProvider } from "../store";
 import { observer } from "mobx-react-lite";
 import List from "./List";
 import AddNewList from "./AddNewList";
+import { useMemo } from "react";
+import { TouchBackend } from "react-dnd-touch-backend";
 
 import styled from "styled-components";
 
@@ -41,11 +43,17 @@ const Main = observer(() => {
   );
 });
 
-const App = () => (
-  <StoreContextProvider>
-    <DndProvider backend={HTML5Backend}>
-      <Main />
-    </DndProvider>
-  </StoreContextProvider>
-);
+const App = () => {
+  const isTouch = useMemo(
+    () => "ontouchstart" in window || !!navigator.msMaxTouchPoints,
+    []
+  );
+  return (
+    <StoreContextProvider>
+      <DndProvider backend={isTouch ? TouchBackend : HTML5Backend}>
+        <Main />
+      </DndProvider>
+    </StoreContextProvider>
+  );
+};
 export default App;
