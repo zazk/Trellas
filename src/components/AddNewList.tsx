@@ -1,6 +1,8 @@
-import { useStore } from "../store";
+import { useCallback } from "react";
+import { State, addNewListAction } from "../store";
 import { observer } from "mobx-react-lite";
 import styled from "styled-components";
+import { useSelector, useDispatch } from "react-redux";
 
 const Button = styled.button`
   width: 200px;
@@ -9,15 +11,23 @@ const Button = styled.button`
   border: 0;
   margin: 20px;
   border-radius: 10px;
-  background:  none;
+  background: none;
   color: #fffa;
   border: 1px solid #fffa;
-  cursor: pointer
+  cursor: pointer;
 `;
 
 const AddNewList = observer(() => {
-  const { lists } = useStore() ?? {};
-  return <Button onClick={() => lists?.addNewList(`List ${(lists?.listIds.length ?? 0) + 1}`)}>add new List</Button>;
+  const dispatch = useDispatch();
+  const listsCount = useSelector(
+    (state: State) => Object.keys(state.list).length
+  );
+  const addNewList = useCallback(
+    () => dispatch(addNewListAction(`List ${listsCount + 1}`)),
+    [listsCount]
+  );
+
+  return <Button onClick={addNewList}>add new List</Button>;
 });
 
 export default AddNewList;

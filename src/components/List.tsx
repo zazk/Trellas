@@ -1,12 +1,18 @@
-import { computed } from "mobx";
 import { observer } from "mobx-react-lite";
-import { useStore, ID } from "../store";
+import {
+  ID,
+  State,
+  moveCardAction,
+  updateCardAction,
+  updateListAction,
+  addNewCardAction
+} from "../store";
 import { useDrop } from "react-dnd";
-import { useState, useEffect, useCallback, ComponentProps } from "react";
+import { useState, useCallback, ComponentProps } from "react";
 import { ItemTypes } from "../utils";
-import Card, {CardSpace} from "./Card";
+import Card, { CardSpace } from "./Card";
 import styled from "styled-components";
-
+import { useSelector, useDispatch } from "react-redux";
 
 const ListContainer = styled.section`
   position: relative;
@@ -57,33 +63,43 @@ const Name = observer<{
 }>(({ onUpdateName, name = "" }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState("");
-
-  useEffect(() => {
-    const timeoutId = setTimeout(() => onUpdateName(value), 1e300);
-    return () => clearTimeout(timeoutId);
-  }, [value]);
-
-  useEffect(() => setValue(name), [name])
+  const onBlur = useCallback(() => {
+    onUpdateName(value);
+    setIsEditing(false);
+  }, []);
+  const onEdit = useCallback(() => {
+    setValue(name);
+    setIsEditing(true);
+  }, [name]);
 
   return isEditing ? (
     <InputName
       autoFocus
       type="text"
       value={value}
-      onBlur={() => setIsEditing(false)}
+      onBlur={onBlur}
       onChange={e => setValue(e.target.value)}
     />
   ) : (
-    <NameStyled onClick={() => setIsEditing(true)}>
-      {name || <i>no name</i>}
-    </NameStyled>
+    <NameStyled onClick={onEdit}>{name || <i>no name</i>}</NameStyled>
   );
 });
 
 const List = observer<{ id: ID }>(({ id }) => {
-  const { lists } = useStore() ?? {};
-
-  const currentList = computed(() => lists?.getListDef(id)).get();
+  const dispatch = useDispatch();
+  const currentList = useSelector((state: State) => {
+    const current = state.list[id];
+    if (!current) return null;
+    console.log(current.name);
+    return {
+      ...current,
+      cards: Object.entries(current.cards).map(([cardId, data]) => ({
+        id: cardId,
+        listId: id,
+        ...data
+      }))
+    };
+  });
 
   const [{ isOver, isOverShallow }, dropRef] = useDrop<
     { type: string; id: string; listId: string; order?: number },
@@ -96,33 +112,40 @@ const List = observer<{ id: ID }>(({ id }) => {
       isOverShallow: !!monitor.isOver({ shallow: true })
     }),
     drop(item) {
-      lists?.moveCard(item.id, item.listId, id, item.order ?? 0);
+      dispatch(moveCardAction(item.id, item.listId, id, item.order ?? 0));
     },
     hover(item, monitor) {
-      if (monitor.isOver({ shallow: true })) item.order = 0;
+      if (monitor.isOver({ shallow: true })) {
+        if (item.listId === id) {
+          item.order = currentList ? currentList.cards.length - 1 : 0;
+        } else {
+          item.order = currentList?.cards.length ?? 0;
+        }
+        // item.order = 0;
+      }
     }
   });
 
   const onUpdateCard = useCallback(
     (newCard: Parameters<ComponentProps<typeof Card>["onUpdateCard"]>[0]) => {
-      const { id: cardID, ...rest } = newCard;
-      lists?.updateCard(cardID, id, rest);
+      const { id: cardId, ...rest } = newCard;
+      dispatch(updateCardAction(id, cardId, rest));
     },
     []
   );
 
   const onDelete = useCallback(() => {}, []);
 
-  if (!currentList || !lists) return null;
+  if (!currentList) return null;
 
   return (
     <ListContainer ref={dropRef} className={isOver ? "over" : ""}>
       <Name
         name={currentList.name}
-        onUpdateName={value => lists.updateList(id, { name: value })}
+        onUpdateName={value => dispatch(updateListAction(id, { name: value }))}
       />
       <ListCardsContainer>
-        {currentList?.cards.map(card => (
+        {currentList.cards.map(card => (
           <Card
             key={card.id}
             {...card}
@@ -131,10 +154,10 @@ const List = observer<{ id: ID }>(({ id }) => {
           />
         ))}
         {isOverShallow && (
-          <CardSpace style={{ order: currentList?.cards.length ?? 0 }} />
+          <CardSpace style={{ order: currentList.cards.length }} />
         )}
       </ListCardsContainer>
-      <AddCardButton onClick={() => lists.addNewCard(id)}>
+      <AddCardButton onClick={() => dispatch(addNewCardAction(id))}>
         + Add new Card
       </AddCardButton>
     </ListContainer>

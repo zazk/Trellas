@@ -1,6 +1,6 @@
 import { useDrag, useDrop } from "react-dnd";
 import { FC, useState, useRef, useMemo, useCallback } from "react";
-import type { ID, TCard, TCardContent } from '../store'
+import type { ID, TCard } from '../store/index'
 import { ItemTypes } from "../utils";
 import styled from "styled-components";
 import EditCard from "./EditCard";
@@ -50,7 +50,9 @@ export const CardEditBtn = styled.button`
 `;
 
 type CardProps = TCard & {
-  onUpdateCard: (newCard: { id: ID } & Partial<TCardContent>) => any;
+  id: string;
+  listId: string;
+  onUpdateCard: (newCard: { id: ID } & Partial<TCard>) => any;
   onDelete: () => any;
 };
 

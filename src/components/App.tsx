@@ -1,11 +1,13 @@
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { useStore, StoreContextProvider } from "../store";
-import { observer } from "mobx-react-lite";
+// import { useStore, StoreContextProvider } from "../store";
+import store, {State} from "../store";
+// import { observer } from "mobx-react-lite";
 import List from "./List";
 import AddNewList from "./AddNewList";
 import { useMemo } from "react";
 import { TouchBackend } from "react-dnd-touch-backend";
+import { Provider, useSelector } from 'react-redux'
 
 import styled from "styled-components";
 
@@ -28,20 +30,21 @@ const Title = styled.h1`
   color: #fffb;
 `;
 
-const Main = observer(() => {
-  const { lists } = useStore() ?? {};
+const Main = () => {
+  // const { lists } = useStore() ?? {};
+  const listsIds = useSelector((state: State) => Object.keys(state.list))
   return (
     <MainStyled>
       <Title>Task Manager Board</Title>
       <Container>
-        {lists?.listIds.map(id => (
+        {listsIds.map(id => (
           <List key={id} id={id} />
         ))}
         <AddNewList />
       </Container>
     </MainStyled>
   );
-});
+};
 
 const App = () => {
   const isTouch = useMemo(
@@ -49,11 +52,11 @@ const App = () => {
     []
   );
   return (
-    <StoreContextProvider>
+    <Provider store={store}>
       <DndProvider backend={isTouch ? TouchBackend : HTML5Backend}>
         <Main />
       </DndProvider>
-    </StoreContextProvider>
+    </Provider>
   );
 };
 export default App;
