@@ -1,4 +1,3 @@
-import { observer } from "mobx-react-lite";
 import {
   ID,
   State,
@@ -8,7 +7,7 @@ import {
   addNewCardAction
 } from "../store";
 import { useDrop } from "react-dnd";
-import { useState, useCallback, ComponentProps } from "react";
+import { useState, useCallback, ComponentProps, FC } from "react";
 import { ItemTypes } from "../utils";
 import Card, { CardSpace } from "./Card";
 import styled from "styled-components";
@@ -57,12 +56,13 @@ const InputName = styled.input`
   width: 100%;
 `;
 
-const Name = observer<{
+const Name: FC<{
   name: string;
   onUpdateName: (newName: string) => any;
-}>(({ onUpdateName, name = "" }) => {
+}> = ({ onUpdateName, name = "" }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState("");
+
   const onBlur = useCallback(() => {
     onUpdateName(value);
     setIsEditing(false);
@@ -83,9 +83,9 @@ const Name = observer<{
   ) : (
     <NameStyled onClick={onEdit}>{name || <i>no name</i>}</NameStyled>
   );
-});
+};
 
-const List = observer<{ id: ID }>(({ id }) => {
+const List: FC<{ id: ID }> = ({ id }) => {
   const dispatch = useDispatch();
   const currentList = useSelector((state: State) => {
     const current = state.list[id];
@@ -121,7 +121,6 @@ const List = observer<{ id: ID }>(({ id }) => {
         } else {
           item.order = currentList?.cards.length ?? 0;
         }
-        // item.order = 0;
       }
     }
   });
@@ -162,6 +161,6 @@ const List = observer<{ id: ID }>(({ id }) => {
       </AddCardButton>
     </ListContainer>
   );
-});
+};
 
 export default List;

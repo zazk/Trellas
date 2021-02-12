@@ -1,6 +1,5 @@
-import { useCallback } from "react";
+import { useCallback, FC } from "react";
 import { State, addNewListAction } from "../store";
-import { observer } from "mobx-react-lite";
 import styled from "styled-components";
 import { useSelector, useDispatch } from "react-redux";
 
@@ -17,7 +16,7 @@ const Button = styled.button`
   cursor: pointer;
 `;
 
-const AddNewList = observer(() => {
+const AddNewList: FC = () => {
   const dispatch = useDispatch();
   const listsCount = useSelector(
     (state: State) => Object.keys(state.list).length
@@ -28,6 +27,6 @@ const AddNewList = observer(() => {
   );
 
   return <Button onClick={addNewList}>add new List</Button>;
-});
+};
 
 export default AddNewList;

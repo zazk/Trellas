@@ -5,17 +5,12 @@ import { uniqid } from "../utils";
 export type ID = string;
 export interface TCard {
   text: string;
-  // id: ID;
-  // listId: ID;
   order: number;
 }
 export interface TList<T = TCard[]> {
-  // id: ID;
   name: string;
   cards: T;
 }
-
-// type TCardContent = Omit<TCard, "id" | "listId">;
 
 // ***********************
 
